@@ -601,7 +601,7 @@ ImagingDrawWideLine(Imaging im, int x0, int y0, int x1, int y1,
     }
 
     big_hypotenuse = sqrt((double) (dx*dx + dy*dy));
-    small_hypotenuse = (width - 1) / 2.0;
+    small_hypotenuse = width / 2.0;
     ratio_max = ROUND_UP(small_hypotenuse) / big_hypotenuse;
     ratio_min = ROUND_DOWN(small_hypotenuse) / big_hypotenuse;
 
