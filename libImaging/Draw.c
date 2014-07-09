@@ -109,14 +109,14 @@ hline8(Imaging im, int x0, int y0, int x1, int ink)
             tmp = x0, x0 = x1, x1 = tmp;
         if (x0 < 0)
             x0 = 0;
-        else if (x0 >= im->xsize)
+        else if (x0 > im->xsize)
             return;
         if (x1 < 0)
             return;
-        else if (x1 >= im->xsize)
-            x1 = im->xsize-1;
-        if (x0 <= x1)
-            memset(im->image8[y0] + x0, (UINT8) ink, x1 - x0 + 1);
+        else if (x1 > im->xsize)
+            x1 = im->xsize;
+        if (x0 < x1)
+            memset(im->image8[y0] + x0, (UINT8) ink, x1 - x0);
     }
 }
 
@@ -131,14 +131,14 @@ hline32(Imaging im, int x0, int y0, int x1, int ink)
             tmp = x0, x0 = x1, x1 = tmp;
         if (x0 < 0)
             x0 = 0;
-        else if (x0 >= im->xsize)
+        else if (x0 > im->xsize)
             return;
         if (x1 < 0)
             return;
-        else if (x1 >= im->xsize)
-            x1 = im->xsize-1;
+        else if (x1 > im->xsize)
+            x1 = im->xsize;
         p = im->image32[y0];
-        while (x0 <= x1)
+        while (x0 < x1)
             p[x0++] = ink;
     }
 }
@@ -154,16 +154,16 @@ hline32rgba(Imaging im, int x0, int y0, int x1, int ink)
             tmp = x0, x0 = x1, x1 = tmp;
         if (x0 < 0)
             x0 = 0;
-        else if (x0 >= im->xsize)
+        else if (x0 > im->xsize)
             return;
         if (x1 < 0)
             return;
-        else if (x1 >= im->xsize)
-            x1 = im->xsize-1;
+        else if (x1 > im->xsize)
+            x1 = im->xsize;
         if (x0 <= x1) {
             UINT8* out = (UINT8*) im->image[y0]+x0*4;
             UINT8* in = (UINT8*) &ink;
-            while (x0 <= x1) {
+            while (x0 < x1) {
                 out[0] = BLEND(in[3], out[0], in[0], tmp1, tmp2);
                 out[1] = BLEND(in[3], out[1], in[1], tmp1, tmp2);
                 out[2] = BLEND(in[3], out[2], in[2], tmp1, tmp2);
