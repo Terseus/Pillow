@@ -422,10 +422,8 @@ polygon_generic(Imaging im, int n, Edge *e, int ink, int eofill,
         hline_handler hline)
 {
 
-    Edge** edge_table;
     float* xx;
-    int edge_count = 0;
-    int ymin = im->ysize - 1;
+    int ymin = im->ysize;
     int ymax = 0;
     int i;
 
@@ -433,51 +431,38 @@ polygon_generic(Imaging im, int n, Edge *e, int ink, int eofill,
         return 0;
     }
 
-    /* Initialize the edge table and find polygon boundaries */
-    edge_table = malloc(sizeof(Edge*) * n);
-    if (!edge_table) {
-        return -1;
-    }
-
+    /* Find polygon boundaries */
     for (i = 0; i < n; i++) {
-        /* This causes that the pixels of horizontal edges are drawn twice :(
-         * but without it there are inconsistencies in ellipses */
-        if (e[i].ymin == e[i].ymax) {
-            (*hline)(im, e[i].xmin, e[i].ymin, e[i].xmax, ink);
-            continue;
-        }
         if (ymin > e[i].ymin) {
             ymin = e[i].ymin;
         }
         if (ymax < e[i].ymax) {
             ymax = e[i].ymax;
         }
-        edge_table[edge_count++] = (e + i);
     }
     if (ymin < 0) {
         ymin = 0;
     }
-    if (ymax >= im->ysize) {
-        ymax = im->ysize - 1;
+    if (ymax > im->ysize) {
+        ymax = im->ysize;
     }
 
     /* Process the edge table with a scan line searching for intersections */
-    xx = malloc(sizeof(float) * edge_count * 2);
+    xx = malloc(sizeof(float) * n * 2);
     if (!xx) {
-        free(edge_table);
         return -1;
     }
-    for (; ymin <= ymax; ymin++) {
+    for (; ymin < ymax; ymin++) {
+        float y = ymin + 0.5F;
         int j = 0;
-        for (i = 0; i < edge_count; i++) {
-            Edge* current = edge_table[i];
-            if (ymin >= current->ymin && ymin <= current->ymax) {
-                xx[j++] = (ymin - current->y0) * current->dx + current->x0;
-            }
-            /* Needed to draw consistent polygons */
-            if (ymin == current->ymax && ymin < ymax) {
-                xx[j] = xx[j - 1];
-                j++;
+        for (i = 0; i < n; i++) {
+            Edge* current = e + i;
+            if (y > current->ymin && y < current->ymax) {
+                if (current->d == 0) {
+                    (*hline)(im, current->xmin, ymin, current->xmax, ink);
+                    continue;
+                }
+                xx[j++] = (y - current->y0) * current->dx + current->x0;
             }
         }
         qsort(xx, j, sizeof(float), x_cmp);
@@ -487,7 +472,6 @@ polygon_generic(Imaging im, int n, Edge *e, int ink, int eofill,
     }
 
     free(xx);
-    free(edge_table);
     return 0;
 }
 
