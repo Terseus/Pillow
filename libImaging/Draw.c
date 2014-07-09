@@ -426,6 +426,8 @@ polygon_generic(Imaging im, int n, Edge *e, int ink, int eofill,
     int ymin = im->ysize;
     int ymax = 0;
     int i;
+    Edge** edge_table = NULL;
+    int edge_count = 0;
 
     if (n <= 0) {
         return 0;
@@ -447,21 +449,35 @@ polygon_generic(Imaging im, int n, Edge *e, int ink, int eofill,
         ymax = im->ysize;
     }
 
+    /* Populate valid edge table and draw horizontal edges */
+    edge_table = (Edge**)malloc(sizeof(Edge*) * n);
+    if (edge_table == NULL) {
+        return -1;
+    }
+    for (i = 0; i < n; i++) {
+        if (e[i].ymin == e[i].ymax) {
+            /* The bottom edge should NOT be drawn */
+            if (e[i].ymin == ymax) {
+                continue;
+            }
+            (*hline)(im, e[i].xmin, e[i].ymin, e[i].xmax, ink);
+        } else {
+            edge_table[edge_count++] = e + i;
+        }
+    }
+
     /* Process the edge table with a scan line searching for intersections */
     xx = malloc(sizeof(float) * n * 2);
     if (!xx) {
+        free(edge_table);
         return -1;
     }
     for (; ymin < ymax; ymin++) {
         float y = ymin + 0.5F;
         int j = 0;
-        for (i = 0; i < n; i++) {
-            Edge* current = e + i;
+        for (i = 0; i < edge_count; i++) {
+            Edge* current = edge_table[i];
             if (y > current->ymin && y < current->ymax) {
-                if (current->d == 0) {
-                    (*hline)(im, current->xmin, ymin, current->xmax, ink);
-                    continue;
-                }
                 xx[j++] = (y - current->y0) * current->dx + current->x0;
             }
         }
@@ -471,6 +487,7 @@ polygon_generic(Imaging im, int n, Edge *e, int ink, int eofill,
         }
     }
 
+    free(edge_table);
     free(xx);
     return 0;
 }
